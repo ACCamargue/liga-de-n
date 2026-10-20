@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Lliga de notes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: inici amb classificació a l'esquerra i formulari + trofeus a la dreta; perfil amb resultats a l'esquerra i resum a la dreta. En mòbil el resum o el formulari va primer. */
+:root {
+  --bg: #EEF1F6;
+  --surface: #FFFFFF;
+  --ink: #16203A;
+  --muted: #5B6578;
+  --line: #D9DFEA;
+  --accent: #2543E8;
+  --accent-ink: #FFFFFF;
+  --soft: #E6EBFB;
+  --good: #177A4B;
+  --good-bg: #DDF3E8;
+  --mid: #8A5A00;
+  --mid-bg: #FBEBC8;
+  --bad: #B3261E;
+  --bad-bg: #FADBD8;
+  --gold: #C58F0A;
+  --silver: #8793A6;
+  --bronze: #B0663A;
+  --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1524; --surface: #171F33; --ink: #E8ECF6; --muted: #9AA5BD; --line: #2A3550;
+    --accent: #7C93FF; --accent-ink: #0F1524; --soft: #202B4A;
+    --good: #5BD39B; --good-bg: #12352A; --mid: #F0C25E; --mid-bg: #3A2D0E; --bad: #FF8A80; --bad-bg: #3D1B1A;
+    --gold: #E8B93A; --silver: #B4BECE; --bronze: #D68B5C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1524; --surface: #171F33; --ink: #E8ECF6; --muted: #9AA5BD; --line: #2A3550;
+  --accent: #7C93FF; --accent-ink: #0F1524; --soft: #202B4A;
+  --good: #5BD39B; --good-bg: #12352A; --mid: #F0C25E; --mid-bg: #3A2D0E; --bad: #FF8A80; --bad-bg: #3D1B1A;
+  --gold: #E8B93A; --silver: #B4BECE; --bronze: #D68B5C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Capçalera */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.brand h1 { font-size: 2rem; font-weight: 800; line-height: 1.05; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
+.who { display: flex; align-items: center; gap: 10px; }
+.who .name { font-weight: 600; overflow-wrap: anywhere; }
+.btn-ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.btn-ghost:hover { background: var(--soft); }
+
+/* Navegació */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.tab { background: transparent; border: 1px solid var(--line); border-radius: 8px; min-height: 44px; padding: 0 18px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.tab:hover { background: var(--soft); }
+.tab[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* Targetes */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
+.card h2 { font-size: 1.2rem; font-weight: 800; }
+.card .sub { color: var(--muted); font-size: 0.9rem; margin: 2px 0 0; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-areas: "rank form" "rank trophies";
+  gap: 20px;
+  align-items: start;
+}
+#rank-card { grid-area: rank; }
+#form-card { grid-area: form; }
+#trophy-card { grid-area: trophies; }
+.prof {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-areas: "list side";
+  gap: 20px;
+  align-items: start;
+}
+#p-list-card { grid-area: list; }
+.side { grid-area: side; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (max-width: 820px) {
+  .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "form" "rank" "trophies"; }
+  .prof { grid-template-columns: minmax(0, 1fr); grid-template-areas: "side" "list"; }
+}
+
+/* Controls */
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label, .lbl { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.input:focus-visible { border-color: var(--accent); }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: end; }
+.row2 .slash { font-family: var(--display); font-size: 1.6rem; color: var(--muted); padding-bottom: 6px; }
+.btn {
+  background: var(--accent); color: var(--accent-ink);
+  border: 0; border-radius: 8px; min-height: 46px; padding: 10px 18px;
+  font-weight: 700; cursor: pointer; width: 100%;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+.stack { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+.preview {
+  min-height: 52px; border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 0.92rem; background: var(--surface);
+}
+.preview strong { font-family: var(--display); font-size: 1.7rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.preview.err { color: var(--bad); border-color: var(--bad); }
+.error { color: var(--bad); font-size: 0.9rem; min-height: 1.2em; margin: 0; }
+
+/* Classificació */
+.rank-head { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+.rank-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { background: transparent; border: 0; padding: 0 14px; min-height: 44px; cursor: pointer; font-weight: 600; color: var(--muted); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.board { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.board li {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  padding: 12px 10px; border-top: 1px solid var(--line);
+}
+.board li:first-child { border-top: 0; }
+.board li.me { background: var(--soft); border-radius: 8px; border-top-color: transparent; }
+.board li.me + li { border-top-color: transparent; }
+.pos { display: flex; justify-content: center; font-family: var(--display); font-weight: 800; font-size: 1.15rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.medal { width: 30px; height: 38px; display: block; }
+.who-cell { min-width: 0; }
+.who-cell .n { font-weight: 700; overflow-wrap: anywhere; }
+.who-cell .m { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.score { text-align: right; font-variant-numeric: tabular-nums; }
+.score .v { font-family: var(--display); font-weight: 800; font-size: 1.5rem; line-height: 1; }
+.score .u { color: var(--muted); font-size: 0.78rem; }
+.empty { border: 1px dashed var(--line); border-radius: 10px; padding: 22px 16px; color: var(--muted); }
+.empty strong { color: var(--ink); display: block; margin-bottom: 4px; }
+.empty .btn { width: auto; margin-top: 12px; }
+.linkbtn {
+  background: none; border: 0; padding: 0; cursor: pointer; font-weight: 700; text-align: left; overflow-wrap: anywhere;
+  color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px;
+}
+.linkbtn:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.tag { display: inline-flex; vertical-align: -4px; margin-left: 6px; }
+.tag svg { width: 18px; height: 18px; display: block; }
+
+/* Trofeus */
+.trophies { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; }
+.trophy { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.trophy:first-child { border-top: 0; }
+.trophy .cup svg { width: 40px; height: 40px; display: block; }
+.trophy .body { min-width: 0; }
+.trophy .t { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.trophy .v { font-family: var(--display); font-weight: 800; font-size: 1.2rem; line-height: 1.2; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.trophy .d { color: var(--muted); font-size: 0.88rem; overflow-wrap: anywhere; }
+.pill { display: inline-block; margin-top: 6px; background: var(--soft); color: var(--accent); border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 700; }
+
+/* Perfil */
+.p-eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.p-name { font-size: 2rem; font-weight: 800; line-height: 1.05; margin-top: 4px; overflow-wrap: anywhere; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; margin: 16px 0 0; }
+.stats div { min-width: 0; }
+.stats dt { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.stats dd { margin: 2px 0 0; font-family: var(--display); font-weight: 800; font-size: 1.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.subjects { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; }
+.subj { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); align-items: baseline; }
+.subj:first-child { border-top: 0; }
+.subj .sn { font-weight: 600; overflow-wrap: anywhere; }
+.subj .sv { font-family: var(--display); font-weight: 800; font-variant-numeric: tabular-nums; }
+.subj .sm { grid-column: 1 / -1; color: var(--muted); font-size: 0.8rem; }
+.bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+
+.reslist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; }
+.res { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.res:first-child { border-top: 0; }
+.res .info { flex: 1 1 160px; min-width: 0; }
+.res .s { font-weight: 600; overflow-wrap: anywhere; }
+.res .d { color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.res .acts { display: flex; gap: 8px; }
+.res.editing { display: block; }
+.chip { font-family: var(--display); font-weight: 800; border-radius: 999px; padding: 3px 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.chip.mid { background: var(--mid-bg); color: var(--mid); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); }
+.act { background: transparent; border: 1px solid var(--line); border-radius: 8px; min-height: 40px; padding: 0 12px; cursor: pointer; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
+.act:hover { border-color: var(--accent); color: var(--accent); }
+.act.danger:hover { border-color: var(--bad); color: var(--bad); }
+.act.sure { background: var(--bad); border-color: var(--bad); color: var(--surface); }
+.editform { display: flex; flex-direction: column; gap: 12px; background: var(--soft); border-radius: 10px; padding: 14px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions .btn { width: auto; flex: 1 1 140px; }
+.actions .btn-ghost { min-height: 46px; padding: 10px 18px; }
+
+/* Inici de sessió */
+.login { max-width: 440px; margin-top: 8vh; }
+.login h1 { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+.login p.lead { color: var(--muted); margin: 10px 0 0; }
+.login .hint { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+.notice { background: var(--mid-bg); color: var(--mid); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.92rem; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); border-radius: 10px; padding: 11px 18px; font-weight: 600; z-index: 10;
+  max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: pop 0.18s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+}
+</style>
+
+<div class="wrap">
+  <div id="notice" class="notice" role="alert" hidden></div>
+
+  <!-- Inici de sessió -->
+  <section id="login-view" class="login">
+    <h1>Lliga de notes</h1>
+    <p class="lead">Apunta les teves notes, mira com vas i puja posicions a la classificació.</p>
+    <form id="login-form" class="card stack" autocomplete="off" style="margin-top:22px">
+      <div class="field">
+        <label for="l-name">Nom d'usuari</label>
+        <input id="l-name" class="input" type="text" maxlength="30" placeholder="Ex.: Marta" required>
+      </div>
+      <div class="field">
+        <label for="l-pw">Contrasenya</label>
+        <input id="l-pw" class="input" type="password" maxlength="40" placeholder="Mínim 3 caràcters" required>
+      </div>
+      <p id="login-error" class="error" role="alert"></p>
+      <button id="login-btn" class="btn" type="submit">Entra</button>
+      <p class="hint">Si el nom d'usuari encara no existeix, es crea amb aquesta contrasenya. No hi ha manera de recuperar-la.</p>
+    </form>
+  </section>
+
+  <!-- Portal -->
+  <section id="main-view" hidden>
+    <header class="top">
+      <div class="brand">
+        <h1>Lliga de notes</h1>
+        <p>Totes les notes compten sobre 10.</p>
+      </div>
+      <div class="who">
+        <span class="name" id="who-name"></span>
+        <button id="logout" class="btn-ghost" type="button">Surt</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Seccions">
+      <button id="tab-home" class="tab" type="button" aria-current="page">Classificació</button>
+      <button id="tab-me" class="tab" type="button" aria-current="false">El meu perfil</button>
+    </nav>
+
+    <!-- Inici -->
+    <div id="home-view" class="layout">
+      <section id="rank-card" class="card" aria-labelledby="rank-title">
+        <div class="rank-head">
+          <div>
+            <h2 id="rank-title">Classificació</h2>
+            <p class="sub" id="rank-sub"></p>
+          </div>
+          <div class="rank-tools">
+            <div class="field">
+              <label for="f-filter">Matèria</label>
+              <select id="f-filter" class="input"></select>
+            </div>
+            <div class="field">
+              <span class="lbl" id="mode-lbl">Ordena per</span>
+              <div class="seg" role="group" aria-labelledby="mode-lbl">
+                <button type="button" id="mode-sum" aria-pressed="true">Punts</button>
+                <button type="button" id="mode-avg" aria-pressed="false">Mitjana</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ol id="board" class="board"></ol>
+      </section>
+
+      <section id="form-card" class="card" aria-labelledby="form-title">
+        <h2 id="form-title">Afegeix un resultat</h2>
+        <p class="sub">La nota es converteix sola a X/10.</p>
+        <form id="add-form" class="stack" autocomplete="off">
+          <div class="field">
+            <label for="f-subject">Matèria</label>
+            <select id="f-subject" class="input"></select>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-score">Nota</label>
+              <input id="f-score" class="input" type="text" inputmode="decimal" placeholder="7" required>
+            </div>
+            <span class="slash" aria-hidden="true">/</span>
+            <div class="field">
+              <label for="f-outof">Sobre</label>
+              <input id="f-outof" class="input" type="text" inputmode="decimal" value="10" required>
+            </div>
+          </div>
+          <div id="preview" class="preview" aria-live="polite"></div>
+          <p id="add-error" class="error" role="alert"></p>
+          <button id="add-btn" class="btn" type="submit">Afegeix a la classificació</button>
+        </form>
+      </section>
+
+      <section id="trophy-card" class="card" aria-labelledby="trophy-title">
+        <h2 id="trophy-title">Trofeus de la lliga</h2>
+        <p class="sub">Toca un nom per veure totes les seves notes.</p>
+        <ul id="trophies" class="trophies"></ul>
+      </section>
+    </div>
+
+    <!-- Perfil -->
+    <div id="profile-view" class="prof" hidden>
+      <div class="side">
+        <section class="card" aria-labelledby="p-name">
+          <p class="p-eyebrow" id="p-eyebrow"></p>
+          <h2 id="p-name" class="p-name"></h2>
+          <dl id="p-stats" class="stats"></dl>
+        </section>
+        <section class="card" aria-labelledby="p-trophy-title">
+          <h2 id="p-trophy-title">Trofeus</h2>
+          <ul id="p-trophies" class="trophies"></ul>
+        </section>
+        <section class="card" aria-labelledby="p-subj-title">
+          <h2 id="p-subj-title">Mitjana per matèria</h2>
+          <ul id="p-subjects" class="subjects"></ul>
+        </section>
+      </div>
+      <section id="p-list-card" class="card" aria-labelledby="p-list-title">
+        <h2 id="p-list-title">Resultats</h2>
+        <p class="sub" id="p-list-sub"></p>
+        <ul id="p-list" class="reslist"></ul>
+      </section>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var SUBJECTS = ['Mates', 'Anglès', 'Català', 'Castellà', 'Biologia i Geologia', 'Física i Química', 'Geografia i Història', 'Tecnologia', 'Aprendre a Comprendre'];
+  var STORE_KEY = 'lliga-notes-sessio';
+  var MODE_KEY = 'lliga-notes-mode';
+
+  /* ===== CONFIGURACIÓ DE SUPABASE =====
+     Enganxa aquí la URL del projecte i la clau pública (anon / publishable). */
+  var SUPABASE_URL = 'https://ewnefohrfakdvswqxily.supabase.co';   // Ex.: 'https://abcdxyz.supabase.co'
+  var SUPABASE_KEY = 'sb_publishable_Av3eDwfurELC5WIsrtpskA_VYs-GBQe';   // Ex.: 'sb_publishable_...' o 'eyJ...'
+  /* ===================================== */
+
+  var db = null, canWrite = true, unsub = null;
+  var me = null;            // { id, name }
+  var results = [];
+  var mode = 'sum';         // 'sum' | 'avg'
+  var filter = '*';
+  var view = { name: 'home', id: null };
+  var editingId = null;
+  var dbReady;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function fmt(n) { return n.toLocaleString('ca', { maximumFractionDigits: 2 }); }
+  function ordinal(n) { return n === 1 ? '1r' : n === 2 ? '2n' : n === 3 ? '3r' : n === 4 ? '4t' : n + 'è'; }
+  function slugify(s) {
+    return s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  }
+  function parseNum(s) {
+    s = String(s).trim();
+    if (!/^\d+([.,]\d+)?$/.test(s)) return NaN;
+    return parseFloat(s.replace(',', '.'));
+  }
+  function plain(n) { return String(n).replace('.', ','); }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  /* ---------- Connector Supabase (mateixa interfície que la base de dades de Claude) ---------- */
+  function supabaseDb(url, key) {
+    var base = url.replace(/\/+$/, '') + '/rest/v1/';
+    var H = { apikey: key, 'Content-Type': 'application/json' };
+    if (key.indexOf('eyJ') === 0) H.Authorization = 'Bearer ' + key;
+    var pullers = [];
+    function req(method, path, body, prefer) {
+      var headers = Object.assign({}, H);
+      if (prefer) headers.Prefer = prefer;
+      return fetch(base + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined })
+        .then(function (r) {
+          if (!r.ok) {
+            return r.text().then(function (t) {
+              var e = new Error(t); e.code = r.status === 507 ? 'quota_exceeded' : 'unavailable'; throw e;
+            });
+          }
+          if (method !== 'GET') pullers.forEach(function (f) { f(); });
+          return r.status === 204 ? null : r.json().catch(function () { return null; });
+        });
+    }
+    return {
+      doc: function (path) {
+        var i = path.indexOf('/'), table = path.slice(0, i), id = path.slice(i + 1);
+        var q = table + '?id=eq.' + encodeURIComponent(id);
+        return {
+          get: function () {
+            return req('GET', q + '&select=*').then(function (rows) {
+              var row = rows && rows[0];
+              return { exists: !!row, data: function () { return row; } };
+            });
+          },
+          set: function (data) { return req('POST', table, Object.assign({ id: id }, data), 'return=minimal'); },
+          update: function (data) { return req('PATCH', q, data, 'return=minimal'); },
+          delete: function () { return req('DELETE', q); }
+        };
+      },
+      collection: function (table) {
+        return {
+          add: function (data) { return req('POST', table, data, 'return=minimal'); },
+          onSnapshot: function (next, error) {
+            var stopped = false, last = null, first = true;
+            function pull() {
+              req('GET', table + '?select=*&order=ts.desc&limit=1000').then(function (rows) {
+                first = false;
+                if (stopped) return;
+                var sig = JSON.stringify(rows);
+                if (sig === last) return;
+                last = sig;
+                next({ docs: rows.map(function (r) { return { id: r.id, data: function () { return r; } }; }) });
+              }).catch(function (e) {
+                if (first && !stopped) { stopped = true; clearInterval(timer); if (error) error(e); }
+              });
+            }
+            pullers.push(pull);
+            var timer = setInterval(pull, 8000);
+            pull();
+            return function () { stopped = true; clearInterval(timer); pullers = pullers.filter(function (f) { return f !== pull; }); };
+          }
+        };
+      }
+    };
+  }
+
+  async function hashPw(slug, pw) {
+    var s = slug + ':' + pw;
+    try {
+      var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      return Array.from(new Uint8Array(buf)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    } catch (e) {
+      var h = 5381;
+      for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+      return 'f' + (h >>> 0).toString(16);
+    }
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+  function notice(msg) {
+    var n = $('notice');
+    n.textContent = msg; n.hidden = !msg;
+  }
+
+  /* ---------- Gràfics: medalles i copes ---------- */
+  function medalSvg(pos) {
+    var c = { 1: 'var(--gold)', 2: 'var(--silver)', 3: 'var(--bronze)' }[pos];
+    var label = { 1: 'or', 2: 'plata', 3: 'bronze' }[pos];
+    return '<svg class="medal" viewBox="0 0 32 40" role="img" aria-label="Medalla de ' + label + '">' +
+      '<path d="M7 0H14L19 16H12Z" fill="' + c + '" opacity=".6"/>' +
+      '<path d="M25 0H18L13 16H20Z" fill="' + c + '" opacity=".9"/>' +
+      '<circle cx="16" cy="26" r="11.5" fill="' + c + '"/>' +
+      '<circle cx="16" cy="26" r="8" fill="none" stroke="var(--surface)" stroke-opacity=".6" stroke-width="1.5"/>' +
+      '<text x="16" y="30.2" text-anchor="middle" font-size="12" font-weight="800" fill="var(--surface)" font-family="var(--display)">' + pos + '</text>' +
+      '</svg>';
+  }
+  function cupSvg(color) {
+    return '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+      '<path d="M8 4h16v8a8 8 0 0 1-16 0z" fill="' + color + '"/>' +
+      '<path d="M8 7H3v2a5 5 0 0 0 5 5M24 7h5v2a5 5 0 0 1-5 5" fill="none" stroke="' + color + '" stroke-width="2"/>' +
+      '<rect x="14" y="19" width="4" height="5" fill="' + color + '"/>' +
+      '<rect x="9" y="24" width="14" height="4" rx="1" fill="' + color + '"/>' +
+      '</svg>';
+  }
+
+  /* ---------- Càlculs ---------- */
+  function calc(scoreStr, outStr) {
+    var score = parseNum(scoreStr), outOf = parseNum(outStr);
+    if (!String(scoreStr).trim() && !String(outStr).trim()) return { empty: true };
+    if (isNaN(score) || isNaN(outOf)) return { error: 'Escriu només números, per exemple 7 o 7,5.' };
+    if (outOf <= 0) return { error: 'El "sobre" ha de ser més gran que 0.' };
+    if (score > outOf) return { error: 'La nota no pot ser més gran que el total.' };
+    return { score: score, outOf: outOf, grade10: Math.round((score / outOf) * 10 * 100) / 100 };
+  }
+
+  function standings(f, m) {
+    var by = new Map();
+    results.forEach(function (r) {
+      if (f !== '*' && r.subject !== f) return;
+      var g = Number(r.grade10);
+      if (!isFinite(g)) return;
+      var e = by.get(r.userId);
+      if (!e) { e = { id: r.userId, name: r.name || '?', n: 0, sum: 0 }; by.set(r.userId, e); }
+      e.n++; e.sum += g;
+      if (r.name) e.name = r.name;
+    });
+    var rows = Array.from(by.values()).map(function (e) { e.avg = e.sum / e.n; return e; });
+    var key = m === 'sum' ? 'sum' : 'avg';
+    function q(x) { return Math.round(x * 100); }
+    rows.sort(function (a, b) {
+      return (q(b[key]) - q(a[key])) || (b.n - a.n) || a.name.localeCompare(b.name, 'ca');
+    });
+    var pos = 0, prev = null;
+    rows.forEach(function (r, i) {
+      var v = q(r[key]);
+      if (v !== prev) { pos = i + 1; prev = v; }
+      r.pos = pos;
+    });
+    return rows;
+  }
+
+  function betterResult(a, b) { // a millor que b?
+    if (!b) return true;
+    if (a.grade10 !== b.grade10) return a.grade10 > b.grade10;
+    return (a.ts || 0) < (b.ts || 0);
+  }
+  function bestSubjectOf(map) {
+    var bs = null;
+    map.forEach(function (e) {
+      e.avg = e.sum / e.n;
+      if (!bs || e.avg > bs.avg + 1e-9 || (Math.abs(e.avg - bs.avg) < 1e-9 && e.n > bs.n)) bs = e;
+    });
+    return bs;
+  }
+  function collect(list) {
+    var best = null, subj = new Map();
+    list.forEach(function (r) {
+      var g = Number(r.grade10);
+      if (!isFinite(g)) return;
+      var item = { id: r.id, grade10: g, ts: r.ts, userId: r.userId, name: r.name, subject: r.subject };
+      if (betterResult(item, best)) best = item;
+      var e = subj.get(r.subject);
+      if (!e) { e = { subject: r.subject, n: 0, sum: 0 }; subj.set(r.subject, e); }
+      e.n++; e.sum += g;
+    });
+    return { best: best, subject: bestSubjectOf(subj), subjects: Array.from(subj.values()) };
+  }
+  function leagueTrophies() { return collect(results); }
+  function userStats(id) {
+    var list = results.filter(function (r) { return r.userId === id; });
+    list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    var c = collect(list);
+    var sum = 0;
+    list.forEach(function (r) { sum += Number(r.grade10) || 0; });
+    c.subjects.sort(function (a, b) { return b.avg - a.avg || b.n - a.n; });
+    var name = '';
+    if (list.length) name = list[0].name;
+    return { list: list, n: list.length, sum: sum, avg: list.length ? sum / list.length : 0, best: c.best, subject: c.subject, subjects: c.subjects, name: name };
+  }
+  function gradeClass(g) { return g >= 7 ? 'good' : g >= 5 ? 'mid' : 'bad'; }
+  function shortDate(ts) { return ts ? new Date(ts).toLocaleDateString('ca', { day: 'numeric', month: 'short' }) : ''; }
+
+  /* ---------- Navegació ---------- */
+  function go(name, id) {
+    view = { name: name, id: id || null };
+    editingId = null;
+    render();
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  function render() {
+    var onProfile = view.name === 'profile';
+    $('home-view').hidden = onProfile;
+    $('profile-view').hidden = !onProfile;
+    $('tab-home').setAttribute('aria-current', onProfile ? 'false' : 'page');
+    $('tab-me').setAttribute('aria-current', onProfile && me && view.id === me.id ? 'page' : 'false');
+    if (onProfile) renderProfile();
+    else { renderBoard(); renderTrophies(); }
+  }
+
+  /* ---------- Classificació ---------- */
+  function renderBoard() {
+    var ol = $('board');
+    ol.textContent = '';
+    var rows = standings(filter, mode);
+    var lg = leagueTrophies();
+    $('rank-sub').textContent = (filter === '*' ? 'Totes les matèries' : filter) +
+      ' · ' + (mode === 'sum' ? 'suma dels resultats sobre 10' : 'mitjana dels resultats sobre 10');
+    if (!rows.length) {
+      var li0 = el('li');
+      li0.style.display = 'block';
+      li0.innerHTML = '<div class="empty"><strong>Encara no hi ha cap resultat.</strong>Afegeix el primer i seràs a dalt de tot.</div>';
+      ol.appendChild(li0);
+      return;
+    }
+    rows.forEach(function (r) {
+      var li = el('li', me && r.id === me.id ? 'me' : '');
+
+      var pos = el('div', 'pos');
+      if (r.pos <= 3) pos.innerHTML = medalSvg(r.pos); else pos.textContent = r.pos;
+
+      var who = el('div', 'who-cell');
+      var n = el('div', 'n');
+      var nb = el('button', 'linkbtn', r.name);
+      nb.type = 'button';
+      nb.title = 'Veure el perfil de ' + r.name;
+      nb.addEventListener('click', function () { go('profile', r.id); });
+      n.appendChild(nb);
+      if (me && r.id === me.id) n.appendChild(document.createTextNode(' (tu)'));
+      if (lg.best && lg.best.userId === r.id) {
+        var tag = el('span', 'tag');
+        tag.title = 'Té la millor nota de la lliga';
+        tag.innerHTML = cupSvg('var(--gold)');
+        n.appendChild(tag);
+      }
+      var m = el('div', 'm', r.n + (r.n === 1 ? ' resultat' : ' resultats') + ' · ' +
+        (mode === 'sum' ? 'mitjana ' + fmt(r.avg) : fmt(r.sum) + ' punts'));
+      who.appendChild(n); who.appendChild(m);
+
+      var sc = el('div', 'score');
+      sc.appendChild(el('div', 'v', fmt(mode === 'sum' ? r.sum : r.avg)));
+      sc.appendChild(el('div', 'u', mode === 'sum' ? 'punts' : 'de mitjana'));
+
+      li.appendChild(pos); li.appendChild(who); li.appendChild(sc);
+      ol.appendChild(li);
+    });
+  }
+
+  /* ---------- Trofeus ---------- */
+  function trophyLi(color, label, value, detail, holder, pill) {
+    var li = el('li', 'trophy');
+    var cup = el('div', 'cup'); cup.innerHTML = cupSvg(color);
+    var body = el('div', 'body');
+    body.appendChild(el('div', 't', label));
+    body.appendChild(el('div', 'v', value));
+    var d = el('div', 'd');
+    if (holder) {
+      var b = el('button', 'linkbtn', holder.name);
+      b.type = 'button';
+      b.addEventListener('click', function () { go('profile', holder.id); });
+      d.appendChild(b);
+      if (detail) d.appendChild(document.createTextNode(' · ' + detail));
+    } else if (detail) {
+      d.textContent = detail;
+    }
+    body.appendChild(d);
+    if (pill) body.appendChild(el('span', 'pill', pill));
+    li.appendChild(cup); li.appendChild(body);
+    return li;
+  }
+
+  function renderTrophies() {
+    var ul = $('trophies');
+    ul.textContent = '';
+    var lg = leagueTrophies();
+    if (!lg.best) {
+      var li = el('li'); li.style.display = 'block';
+      li.innerHTML = '<div class="empty"><strong>Encara no hi ha trofeus.</strong>Surten quan s\'afegeix el primer resultat.</div>';
+      ul.appendChild(li);
+      return;
+    }
+    ul.appendChild(trophyLi('var(--gold)', 'Millor nota', fmt(lg.best.grade10) + '/10',
+      lg.best.subject, { id: lg.best.userId, name: lg.best.name || '?' }));
+    ul.appendChild(trophyLi('var(--accent)', 'Millor assignatura', lg.subject.subject,
+      'mitjana ' + fmt(lg.subject.avg) + ' · ' + lg.subject.n + (lg.subject.n === 1 ? ' resultat' : ' resultats'), null));
+  }
+
+  /* ---------- Perfil ---------- */
+  function renderProfile() {
+    renderProfileSide();
+    if (editingId === null) renderProfileList();
+  }
+
+  function renderProfileSide() {
+    var id = view.id;
+    var own = !!(me && id === me.id);
+    var st = userStats(id);
+    var lg = leagueTrophies();
+    $('p-eyebrow').textContent = own ? 'El teu perfil' : 'Perfil';
+    $('p-name').textContent = st.name || (own ? me.name : id);
+
+    var row = standings('*', mode).find(function (r) { return r.id === id; });
+    var total = standings('*', mode).length;
+    var stats = $('p-stats'); stats.textContent = '';
+    [
+      ['Resultats', String(st.n)],
+      ['Mitjana', st.n ? fmt(st.avg) : '–'],
+      ['Punts', st.n ? fmt(st.sum) : '–'],
+      ['Posició', row ? ordinal(row.pos) + ' de ' + total : '–']
+    ].forEach(function (p) {
+      var d = el('div');
+      d.appendChild(el('dt', null, p[0]));
+      d.appendChild(el('dd', null, p[1]));
+      stats.appendChild(d);
+    });
+
+    var tl = $('p-trophies'); tl.textContent = '';
+    if (!st.n) {
+      var li = el('li'); li.style.display = 'block';
+      li.innerHTML = '<div class="empty"><strong>Sense trofeus encara.</strong>Apareixen amb el primer resultat.</div>';
+      tl.appendChild(li);
+    } else {
+      var holdsBest = lg.best && st.best && lg.best.id === st.best.id;
+      tl.appendChild(trophyLi('var(--gold)', 'Millor nota', fmt(st.best.grade10) + '/10',
+        st.best.subject + (st.best.ts ? ' · ' + shortDate(st.best.ts) : ''), null,
+        holdsBest ? 'Millor nota de la lliga' : ''));
+      var holdsSubj = lg.subject && st.subject && lg.subject.subject === st.subject.subject;
+      tl.appendChild(trophyLi('var(--accent)', 'Millor assignatura', st.subject.subject,
+        'mitjana ' + fmt(st.subject.avg) + ' · ' + st.subject.n + (st.subject.n === 1 ? ' resultat' : ' resultats'), null,
+        holdsSubj ? 'També és la millor de la lliga' : ''));
+    }
+
+    var sl = $('p-subjects'); sl.textContent = '';
+    if (!st.n) {
+      var li2 = el('li'); li2.style.display = 'block';
+      li2.innerHTML = '<div class="empty">Encara no hi ha cap matèria amb resultats.</div>';
+      sl.appendChild(li2);
+    }
+    st.subjects.forEach(function (s) {
+      var li3 = el('li', 'subj');
+      li3.appendChild(el('span', 'sn', s.subject));
+      li3.appendChild(el('span', 'sv', fmt(s.avg) + '/10'));
+      var bar = el('div', 'bar'); var i = el('i');
+      i.style.width = Math.max(2, Math.min(100, s.avg * 10)) + '%';
+      bar.appendChild(i);
+      li3.appendChild(bar);
+      li3.appendChild(el('span', 'sm', s.n + (s.n === 1 ? ' resultat' : ' resultats')));
+      sl.appendChild(li3);
+    });
+  }
+
+  function renderProfileList() {
+    var ul = $('p-list'); ul.textContent = '';
+    var id = view.id;
+    var own = !!(me && id === me.id);
+    var canEdit = own && !!db && canWrite;
+    var st = userStats(id);
+    $('p-list-sub').textContent = st.n
+      ? st.n + (st.n === 1 ? ' resultat' : ' resultats') + (canEdit ? ' · pots editar-los o esborrar-los' : '')
+      : '';
+    if (!st.n) {
+      var li0 = el('li'); li0.style.display = 'block';
+      if (own) {
+        li0.innerHTML = '<div class="empty"><strong>Encara no has afegit cap resultat.</strong>Quan en tinguis, els podràs editar o esborrar des d\'aquí.</div>';
+        var b = el('button', 'btn', 'Afegeix un resultat');
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          go('home');
+          var f = $('f-score'); if (f) f.focus();
+        });
+        li0.firstChild.appendChild(b);
+      } else {
+        li0.innerHTML = '<div class="empty"><strong>Aquest alumne encara no ha afegit cap resultat.</strong></div>';
+      }
+      ul.appendChild(li0);
+      return;
+    }
+    st.list.forEach(function (r) {
+      if (canEdit && editingId === r.id) { ul.appendChild(editRow(r)); return; }
+      var li = el('li', 'res');
+      var info = el('div', 'info');
+      info.appendChild(el('div', 's', r.subject));
+      var date = shortDate(r.ts);
+      info.appendChild(el('div', 'd', fmt(Number(r.score)) + ' sobre ' + fmt(Number(r.outOf)) +
+        (date ? ' · ' + date : '') + (r.edited ? ' · editat' : '')));
+      var chip = el('span', 'chip ' + gradeClass(r.grade10), fmt(Number(r.grade10)) + '/10');
+      li.appendChild(info); li.appendChild(chip);
+
+      if (canEdit) {
+        var acts = el('div', 'acts');
+        var ed = el('button', 'act', 'Edita');
+        ed.type = 'button';
+        ed.setAttribute('aria-label', 'Edita el resultat de ' + r.subject);
+        ed.addEventListener('click', function () {
+          editingId = r.id;
+          renderProfileList();
+          var f = $('e-score'); if (f) f.focus();
+        });
+        var del = el('button', 'act danger', 'Esborra');
+        del.type = 'button';
+        del.setAttribute('aria-label', 'Esborra el resultat de ' + r.subject);
+        var timer;
+        del.addEventListener('click', function () {
+          if (!del.classList.contains('sure')) {
+            del.classList.add('sure'); del.textContent = 'Segur?';
+            timer = setTimeout(function () { del.classList.remove('sure'); del.textContent = 'Esborra'; }, 3000);
+            return;
+          }
+          clearTimeout(timer);
+          del.disabled = true;
+          db.doc('results/' + r.id).delete().then(function () { toast('Resultat esborrat'); })
+            .catch(function () { del.disabled = false; toast('No s\'ha pogut esborrar. Torna-ho a provar.'); });
+        });
+        acts.appendChild(ed); acts.appendChild(del);
+        li.appendChild(acts);
+      }
+      ul.appendChild(li);
+    });
+  }
+
+  function editRow(r) {
+    var li = el('li', 'res editing');
+    var form = el('form', 'editform');
+    form.autocomplete = 'off';
+    form.innerHTML =
+      '<div class="field"><label for="e-subject">Matèria</label><select id="e-subject" class="input"></select></div>' +
+      '<div class="row2">' +
+        '<div class="field"><label for="e-score">Nota</label><input id="e-score" class="input" type="text" inputmode="decimal" required></div>' +
+        '<span class="slash" aria-hidden="true">/</span>' +
+        '<div class="field"><label for="e-outof">Sobre</label><input id="e-outof" class="input" type="text" inputmode="decimal" required></div>' +
+      '</div>' +
+      '<div id="e-preview" class="preview" aria-live="polite"></div>' +
+      '<p id="e-error" class="error" role="alert"></p>' +
+      '<div class="actions"><button id="e-save" class="btn" type="submit">Desa els canvis</button>' +
+      '<button id="e-cancel" class="btn-ghost" type="button">Cancel·la</button></div>';
+    li.appendChild(form);
+
+    var sel = form.querySelector('#e-subject');
+    SUBJECTS.forEach(function (s) {
+      var o = el('option', null, s); o.value = s; sel.appendChild(o);
+    });
+    sel.value = r.subject;
+    var sc = form.querySelector('#e-score'), oo = form.querySelector('#e-outof');
+    sc.value = plain(r.score); oo.value = plain(r.outOf);
+    var pv = form.querySelector('#e-preview');
+    function upd() { previewInto(pv, sc.value, oo.value); }
+    sc.addEventListener('input', upd); oo.addEventListener('input', upd);
+    upd();
+
+    form.querySelector('#e-cancel').addEventListener('click', function () {
+      editingId = null; renderProfileList();
+    });
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errEl = form.querySelector('#e-error');
+      errEl.textContent = '';
+      var c = calc(sc.value, oo.value);
+      if (c.empty || c.error) { errEl.textContent = c.error || 'Escriu la nota i el total.'; return; }
+      var btn = form.querySelector('#e-save');
+      btn.disabled = true;
+      try {
+        await db.doc('results/' + r.id).update({
+          subject: sel.value, score: c.score, outOf: c.outOf, grade10: c.grade10, edited: Date.now()
+        });
+        editingId = null;
+        render();
+        toast('Resultat actualitzat: ' + fmt(c.grade10) + '/10');
+      } catch (x) {
+        btn.disabled = false;
+        errEl.textContent = 'No s\'ha pogut desar. Torna-ho a provar.';
+      }
+    });
+    return li;
+  }
+
+  /* ---------- Formulari d'afegir ---------- */
+  function previewInto(p, scoreStr, outStr) {
+    var c = calc(scoreStr, outStr);
+    p.classList.remove('err');
+    if (c.empty || (c.error && !String(scoreStr).trim())) {
+      p.textContent = 'Escriu la nota i veuràs el resultat sobre 10.';
+    } else if (c.error) {
+      p.classList.add('err'); p.textContent = c.error;
+    } else {
+      p.innerHTML = '<span>Compta com</span><strong></strong>';
+      p.querySelector('strong').textContent = fmt(c.grade10) + '/10';
+    }
+  }
+  function updatePreview() { previewInto($('preview'), $('f-score').value, $('f-outof').value); }
+
+  async function addResult(e) {
+    e.preventDefault();
+    $('add-error').textContent = '';
+    if (!me) return;
+    var f = calc($('f-score').value, $('f-outof').value);
+    if (f.empty || f.error) { $('add-error').textContent = f.error || 'Escriu la nota i el total.'; return; }
+    if (!db) { $('add-error').textContent = 'No hi ha connexió amb la base de dades.'; return; }
+    var btn = $('add-btn');
+    btn.disabled = true;
+    try {
+      await db.collection('results').add({
+        userId: me.id, name: me.name, subject: $('f-subject').value,
+        score: f.score, outOf: f.outOf, grade10: f.grade10, ts: Date.now()
+      });
+      $('f-score').value = '';
+      updatePreview();
+      toast('Afegit: ' + fmt(f.grade10) + '/10 a ' + $('f-subject').value);
+      $('f-score').focus();
+    } catch (err) {
+      $('add-error').textContent = err && err.code === 'quota_exceeded'
+        ? 'La base de dades és plena.'
+        : 'No s\'ha pogut desar. Torna-ho a provar.';
+    } finally {
+      btn.disabled = !canWrite;
+    }
+  }
+
+  /* ---------- Sessió ---------- */
+  function showMain() {
+    $('login-view').hidden = true;
+    $('main-view').hidden = false;
+    $('who-name').textContent = me.name;
+    if (db && !unsub) subscribe();
+    render();
+  }
+
+  function subscribe() {
+    unsub = db.collection('results').onSnapshot(function (snap) {
+      results = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      if (me) render();
+    }, function () {
+      unsub = null;
+      notice('No es pot llegir la base de dades. Comprova la URL i la clau de Supabase, i que hagis executat supabase.sql.');
+    });
+  }
+
+  async function login(e) {
+    e.preventDefault();
+    var err = $('login-error');
+    err.textContent = '';
+    var name = $('l-name').value.trim();
+    var pw = $('l-pw').value;
+    var id = slugify(name);
+    if (!id) { err.textContent = 'Escriu un nom d\'usuari amb lletres o números.'; return; }
+    if (pw.length < 3) { err.textContent = 'La contrasenya ha de tenir almenys 3 caràcters.'; return; }
+    var btn = $('login-btn');
+    btn.disabled = true;
+    try {
+      await dbReady;
+      if (!db) { err.textContent = 'No hi ha connexió amb la base de dades.'; return; }
+      var hash = await hashPw(id, pw);
+      var ref = db.doc('users/' + id);
+      var snap = await ref.get();
+      if (snap.exists) {
+        if (snap.data().hash !== hash) { err.textContent = 'Contrasenya incorrecta.'; return; }
+        me = { id: id, name: snap.data().name || name };
+      } else {
+        await ref.set({ name: name, hash: hash, created: Date.now() });
+        me = { id: id, name: name };
+      }
+      lsSet(STORE_KEY, JSON.stringify(me));
+      $('l-pw').value = '';
+      view = { name: 'home', id: null };
+      showMain();
+    } catch (x) {
+      err.textContent = 'No s\'ha pogut entrar. Torna-ho a provar.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function logout() {
+    lsDel(STORE_KEY);
+    me = null;
+    view = { name: 'home', id: null };
+    editingId = null;
+    $('main-view').hidden = true;
+    $('login-view').hidden = false;
+    $('l-name').focus();
+  }
+
+  function setMode(m) {
+    mode = m;
+    lsSet(MODE_KEY, m);
+    $('mode-sum').setAttribute('aria-pressed', String(m === 'sum'));
+    $('mode-avg').setAttribute('aria-pressed', String(m === 'avg'));
+    if (me) render();
+  }
+
+  /* ---------- Arrencada ---------- */
+  function init() {
+    var sSel = $('f-subject'), fSel = $('f-filter');
+    SUBJECTS.forEach(function (s) {
+      var o = el('option', null, s); o.value = s; sSel.appendChild(o);
+    });
+    var all = el('option', null, 'Totes les matèries'); all.value = '*'; fSel.appendChild(all);
+    SUBJECTS.forEach(function (s) {
+      var o = el('option', null, s); o.value = s; fSel.appendChild(o);
+    });
+
+    fSel.addEventListener('change', function () { filter = fSel.value; renderBoard(); });
+    $('mode-sum').addEventListener('click', function () { setMode('sum'); });
+    $('mode-avg').addEventListener('click', function () { setMode('avg'); });
+    $('f-score').addEventListener('input', updatePreview);
+    $('f-outof').addEventListener('input', updatePreview);
+    $('add-form').addEventListener('submit', addResult);
+    $('login-form').addEventListener('submit', login);
+    $('logout').addEventListener('click', logout);
+    $('tab-home').addEventListener('click', function () { go('home'); });
+    $('tab-me').addEventListener('click', function () { if (me) go('profile', me.id); });
+    updatePreview();
+
+    var m = lsGet(MODE_KEY);
+    if (m === 'avg') setMode('avg');
+
+    try {
+      var saved = JSON.parse(lsGet(STORE_KEY) || 'null');
+      if (saved && saved.id && saved.name) { me = saved; showMain(); }
+    } catch (e) {}
+
+    dbReady = (async function () {
+      try {
+        if (SUPABASE_URL && SUPABASE_KEY) {
+          db = supabaseDb(SUPABASE_URL, SUPABASE_KEY);
+        } else if (window.claude && window.claude.use) {
+          db = await window.claude.use('db');
+          var user = await window.claude.use('user');
+          if (user) { var cw = await user.can('data.write'); canWrite = cw !== false; }
+        }
+      } catch (e) { db = null; }
+      if (!db) {
+        notice('Falta configurar la base de dades: omple SUPABASE_URL i SUPABASE_KEY al principi del script.');
+      } else if (!canWrite) {
+        notice('Pots veure la classificació, però aquest enllaç no et deixa afegir ni editar resultats.');
+        $('add-btn').disabled = true;
+      }
+      if (db && me && !unsub) subscribe();
+    })();
+  }
+
+  init();
+})();
+</script>
+
